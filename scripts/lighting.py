@@ -10,15 +10,41 @@ from collections import Counter
 
 
 class ColorCapture:
+    '''
+    Color capture and dominant color generation class
+    Performs screen capture, subsampling and k-means clustering.
+    '''
+
     def __init__(self):
+        '''
+        Set clusters higher or lower to get more granularity
+        in generated colors.
+        '''
         self.clusters = 5
 
     def show_image(self, img):
+        '''
+        Utility function to show image in OpenCV
+
+        Args:
+            img (np.ndarray): Image to display
+        '''
         cv2.imshow("Test", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
     def get_hsv(self, rgb):
+        '''
+        Converts given RGB in range (0-255) into
+        correctly scaled HSV, for pyHS100 API.
+        The API expects HSV in H=(0-360) and S,V=(0-100)
+
+        Args:
+            rgb (list): RGB values as list
+
+        Returns:
+            list: Correctly scaled HSV values
+        '''
         scaling_factors = (360, 100, 100)
         hsv = list(rgb_to_hsv(r=rgb[0]/255, g=rgb[1]/255, b=rgb[2]/255))
         for i in range(len(scaling_factors)):
@@ -28,6 +54,18 @@ class ColorCapture:
         return hsv
 
     def pixel_sampler(self, img, sample_percent):
+        '''
+        Samples without replacement a random number of pixels
+        from given image. This is done to subsample the large
+        image and reduce the number of points for clustering.
+
+        Args:
+            img (np.ndarray): The input image to subsample
+            sample_percent (float): The percent of pixels to use
+
+        Returns:
+            np.ndarray: Array of pixels after subsampling
+        '''
         dim = img.shape[0]
         samples = sample_without_replacement(
             n_population=dim, n_samples=int(dim * sample_percent))
@@ -35,6 +73,15 @@ class ColorCapture:
         return sample_pixels
 
     def get_screen_patch(self):
+        '''
+        Get multiple patches from various parts of the screen,
+        based on given dimensions and combining them into one
+        composite image. Then, subsample the composite image
+        to a given percentage and return a list of pixels.
+
+        Returns:
+            np.ndarray: List of subsampled pixels from composite image
+        '''
         patch_w, patch_h = 50, 50
         screen_w, screen_h = 1920, 1080
         screen_center_x, screen_center_y = int(screen_w / 2), int(screen_h / 2)
@@ -57,9 +104,18 @@ class ColorCapture:
         return crop
 
     def get_dominant_hsv(self, img):
-        """
-        See https://adamspannbauer.github.io/2018/03/02/app-icon-dominant-colors/
-        """
+        '''
+        Perform k-means clustering on given array of RGB pixels
+        and get the most common color associated with the clusters.
+        See: https://adamspannbauer.github.io/2018/03/02/app-icon-dominant-colors/
+
+        Args:
+            img (np.ndarray): Input pixels to cluster
+
+        Returns:
+            list: list of HSV values for dominant color
+        '''
+
         kmeans = KMeans(n_clusters=self.clusters)
         labels = kmeans.fit_predict(img)
         label_counts = Counter(labels)
