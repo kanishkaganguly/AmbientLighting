@@ -13,7 +13,7 @@ mss==5.1.0
 numpy==1.18.4
 opencv-contrib-python==4.2.0.34
 opencv-python==4.2.0.34
-Pillow==7.1.2
+Pillow==10.0.1
 pkg-resources==0.0.0
 pycodestyle==2.6.0
 pyHS100==0.3.5
